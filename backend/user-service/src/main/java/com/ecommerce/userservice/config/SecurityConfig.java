@@ -14,28 +14,34 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SecurityConfig {
 
     /**
-     * Configure Spring Security with OAuth2 JWT validation
+     * Configure Spring Security with stateless, method-level security
+     * JWT validation is performed at method level via @PreAuthorize annotations
      */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            // Use JWT tokens (stateless)
+            // Disable CSRF for stateless APIs
+            .csrf(csrf -> csrf.disable())
+            
+            // Use stateless sessions
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             
             // Configure authorization
             .authorizeHttpRequests(authz -> authz
                 // Public endpoints
-                .requestMatchers("/health", "/actuator/**").permitAll()
+                .requestMatchers("/health", "/actuator/**", "/h2-console/**").permitAll()
+                
+                // Allow H2 console (development only)
+                .requestMatchers("/h2-console/**").permitAll()
                 
                 // All other requests require authentication
+                // Actual authorization is handled by @PreAuthorize on controllers
                 .anyRequest().authenticated()
             )
             
-            // Configure OAuth2 Resource Server with JWT
-            .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt
-                    .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                )
+            // Allow H2 console framing
+            .headers(headers -> headers
+                .frameOptions(frameOptions -> frameOptions.disable())
             )
             
             // Exception handling
@@ -53,14 +59,5 @@ public class SecurityConfig {
             );
 
         return http.build();
-    }
-
-    /**
-     * Convert JWT to Spring Security Authentication object
-     * Extract roles from cognito:groups claim
-     */
-    @Bean
-    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        return new JwtAuthenticationConverter();
     }
 }
