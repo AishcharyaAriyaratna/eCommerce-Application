@@ -1,0 +1,39 @@
+# IDE
+.idea/
+*.iml
+.vscode/
+*.code-workspace
+
+# Build artifacts
+target/
+dist/
+build/
+node_modules/
+*.jar
+*.war
+*.ear
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Dependencies
+package-lock.json
+pom.lock
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Cache
+.cache/
+.gradle/

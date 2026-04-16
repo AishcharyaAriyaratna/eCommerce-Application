@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: supply-management-service
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+  datasource:
+    url: jdbc:h2:mem:supplydb
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+
+  # OAuth2 Resource Server Configuration
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://cognito-idp.${COGNITO_REGION:us-east-1}.amazonaws.com/${COGNITO_USER_POOL_ID}
+          jwk-set-uri: https://cognito-idp.${COGNITO_REGION:us-east-1}.amazonaws.com/${COGNITO_USER_POOL_ID}/.well-known/jwks.json
+
+server:
+  port: 8084

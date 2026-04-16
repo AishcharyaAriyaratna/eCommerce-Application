@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Frontend
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_BFF_API_URL=http://localhost:3001
+      - REACT_APP_COGNITO_DOMAIN=${COGNITO_DOMAIN}
+      - REACT_APP_COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID}
+      - REACT_APP_COGNITO_REGION=us-east-1
+    depends_on:
+      - bff
+    networks:
+      - ecommerce-network
+
+  # Backend for Frontend (BFF)
+  bff:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.bff
+    ports:
+      - "3001:3001"
+    environment:
+      - PORT=3001
+      - NODE_ENV=development
+      - USER_SERVICE_URL=http://user-service:8081
+      - PRODUCT_SERVICE_URL=http://product-service:8082
+      - ORDER_SERVICE_URL=http://order-service:8083
+      - SUPPLY_MANAGEMENT_SERVICE_URL=http://supply-management-service:8084
+      - COGNITO_ISSUER=${COGNITO_ISSUER}
+      - COGNITO_AUDIENCE=${COGNITO_AUDIENCE}
+    depends_on:
+      - user-service
+      - product-service
+      - order-service
+      - supply-management-service
+    networks:
+      - ecommerce-network
+
+  # User Service
+  user-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SERVER_PORT=8081
+      - COGNITO_USER_POOL_ID=${COGNITO_USER_POOL_ID}
+      - COGNITO_CLIENT_ID=${COGNITO_CLIENT_ID}
+    networks:
+      - ecommerce-network
+
+  # Product Service
+  product-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.product-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SERVER_PORT=8082
+    networks:
+      - ecommerce-network
+
+  # Order Service
+  order-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.order-service
+    ports:
+      - "8083:8083"
+    environment:
+      - SERVER_PORT=8083
+    networks:
+      - ecommerce-network
+
+  # Supply Management Service
+  supply-management-service:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.supply-management-service
+    ports:
+      - "8084:8084"
+    environment:
+      - SERVER_PORT=8084
+    networks:
+      - ecommerce-network
+
+networks:
+  ecommerce-network:
+    driver: bridge
