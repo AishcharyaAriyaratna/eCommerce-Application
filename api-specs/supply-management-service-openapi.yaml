@@ -1,0 +1,608 @@
+openapi: 3.0.0
+info:
+  title: Supply Management Service API
+  description: Supplier management and approval workflow for the eCommerce platform
+  version: 1.0.0
+  contact:
+    name: eCommerce Platform Team
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8084
+    description: Development server
+
+paths:
+  /api/suppliers:
+    get:
+      summary: List all suppliers
+      description: Returns a list of all suppliers in the system
+      operationId: getAllSuppliers
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: size
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of suppliers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierDTO'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      summary: Register new supplier
+      description: Registers a new supplier. No role restriction for registration.
+      operationId: registerSupplier
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterSupplierRequest'
+      responses:
+        '201':
+          description: Supplier registered successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '409':
+          description: Supplier already exists (email or name)
+
+  /api/suppliers/{id}:
+    get:
+      summary: Get supplier by ID
+      description: Retrieves a specific supplier by their ID
+      operationId: getSupplierById
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Supplier retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    put:
+      summary: Update supplier
+      description: Updates an existing supplier. Requires SUPPLIER or DATA_STEWARD role.
+      operationId: updateSupplier
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSupplierRequest'
+      responses:
+        '200':
+          description: Supplier updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+    delete:
+      summary: Delete supplier
+      description: Deletes a supplier. Requires DATA_STEWARD role.
+      operationId: deleteSupplier
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '204':
+          description: Supplier deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/suppliers/{id}/approve:
+    post:
+      summary: Approve supplier
+      description: Approves a pending supplier registration. Requires DATA_STEWARD role.
+      operationId: approveSupplier
+      tags:
+        - Approval
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Supplier approved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '400':
+          description: Supplier cannot be approved (invalid status)
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/suppliers/{id}/reject:
+    post:
+      summary: Reject supplier
+      description: Rejects a pending supplier registration. Requires DATA_STEWARD role.
+      operationId: rejectSupplier
+      tags:
+        - Approval
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  example: Incomplete documentation
+      responses:
+        '200':
+          description: Supplier rejected successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '400':
+          description: Supplier cannot be rejected (invalid status)
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/suppliers/{id}/suspend:
+    patch:
+      summary: Suspend supplier
+      description: Suspends an active supplier. Requires DATA_STEWARD role.
+      operationId: suspendSupplier
+      tags:
+        - Supplier Status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  example: Policy violation
+      responses:
+        '200':
+          description: Supplier suspended successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '400':
+          description: Supplier cannot be suspended (invalid status)
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/suppliers/{id}/activate:
+    patch:
+      summary: Activate supplier
+      description: Activates a suspended supplier. Requires DATA_STEWARD role.
+      operationId: activateSupplier
+      tags:
+        - Supplier Status
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        '200':
+          description: Supplier activated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '400':
+          description: Supplier cannot be activated (invalid status)
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/suppliers/name/{name}:
+    get:
+      summary: Search suppliers by name
+      description: Searches for suppliers by their name
+      operationId: searchSuppliersByName
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Suppliers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierDTO'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/suppliers/email/{email}:
+    get:
+      summary: Search supplier by email
+      description: Searches for a supplier by their email address
+      operationId: searchSupplierByEmail
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: email
+          in: path
+          required: true
+          schema:
+            type: string
+            format: email
+      responses:
+        '200':
+          description: Supplier retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SupplierDTO'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+
+  /api/suppliers/status/active:
+    get:
+      summary: Get active suppliers
+      description: Returns all active suppliers
+      operationId: getActiveSuppliers
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Active suppliers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierDTO'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /api/suppliers/status/pending:
+    get:
+      summary: Get pending suppliers
+      description: Returns all suppliers awaiting approval. Requires DATA_STEWARD role.
+      operationId: getPendingSuppliers
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Pending suppliers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierDTO'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /api/suppliers/country/{country}:
+    get:
+      summary: Get suppliers by country
+      description: Returns all suppliers from a specific country
+      operationId: getSuppliersByCountry
+      tags:
+        - Suppliers
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: country
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Suppliers retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SupplierDTO'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  schemas:
+    SupplierDTO:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 1
+        name:
+          type: string
+          example: TechSupply Corp
+        email:
+          type: string
+          format: email
+          example: contact@techsupply.com
+        phone:
+          type: string
+          example: +1-555-0100
+        address:
+          type: string
+          example: 123 Tech Street, San Francisco, CA 94102
+        city:
+          type: string
+          example: San Francisco
+        country:
+          type: string
+          example: United States
+        taxId:
+          type: string
+          example: 12-3456789
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED, SUSPENDED]
+          example: APPROVED
+        registrationDate:
+          type: string
+          format: date-time
+          example: 2026-04-16T12:00:00Z
+        createdAt:
+          type: string
+          format: date-time
+          example: 2026-04-16T12:00:00Z
+        updatedAt:
+          type: string
+          format: date-time
+          example: 2026-04-16T12:00:00Z
+
+    RegisterSupplierRequest:
+      type: object
+      required:
+        - name
+        - email
+        - phone
+        - address
+        - city
+        - country
+        - taxId
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 200
+          example: TechSupply Corp
+        email:
+          type: string
+          format: email
+          example: contact@techsupply.com
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: +1-555-0100
+        address:
+          type: string
+          minLength: 1
+          maxLength: 300
+          example: 123 Tech Street, San Francisco, CA 94102
+        city:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: San Francisco
+        country:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: United States
+        taxId:
+          type: string
+          minLength: 1
+          maxLength: 50
+          example: 12-3456789
+
+    UpdateSupplierRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: contact@techsupply.com
+        phone:
+          type: string
+          minLength: 1
+          maxLength: 20
+          example: +1-555-0100
+        address:
+          type: string
+          minLength: 1
+          maxLength: 300
+          example: 123 Tech Street, San Francisco, CA 94102
+        city:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: San Francisco
+        country:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: United States
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        status:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT Bearer token from authentication service
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ForbiddenError:
+      description: Access denied - insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    BadRequestError:
+      description: Invalid request parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFoundError:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+tags:
+  - name: Suppliers
+    description: Supplier management operations
+  - name: Approval
+    description: Supplier approval workflow
+  - name: Supplier Status
+    description: Supplier status management

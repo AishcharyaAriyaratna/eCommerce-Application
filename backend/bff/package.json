@@ -1,0 +1,28 @@
+{
+  "name": "ecommerce-bff",
+  "version": "1.0.0",
+  "description": "Backend for Frontend (BFF) for eCommerce application",
+  "main": "src/index.js",
+  "Scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": ["bff", "api-gateway", "nodejs", "express"],
+  "author": "eCommerce Team",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "axios": "^1.4.0",
+    "jsonwebtoken": "^9.0.0",
+    "cors": "^2.8.5",
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.0.3",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

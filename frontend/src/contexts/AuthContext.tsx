@@ -34,19 +34,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const login = async (username: string, role: string) => {
     try {
       setIsLoading(true);
+      console.log('🔐 Attempting login with:', { username, role });
+      
       const tokens = await LocalAuthService.login(username, role);
+      console.log('✅ Login successful, tokens received:', {
+        hasIdToken: !!tokens.id_token,
+        hasAccessToken: !!tokens.access_token,
+        hasRefreshToken: !!tokens.refresh_token,
+      });
 
       // Store tokens
       localStorage.setItem('id_token', tokens.id_token);
       localStorage.setItem('access_token', tokens.access_token);
       localStorage.setItem('refresh_token', tokens.refresh_token);
 
+      // Verify tokens were stored
+      const storedIdToken = localStorage.getItem('id_token');
+      console.log('💾 Tokens stored in localStorage:', { stored: !!storedIdToken });
+
       // Update context state
       const currentUser = LocalAuthService.parseToken(tokens.id_token);
+      console.log('👤 User info parsed:', { username: currentUser.username, role: currentUser.role });
+      
       setUser(currentUser);
       setIsAuthenticated(true);
+      console.log('✨ Auth context updated, isAuthenticated =', true);
     } catch (error) {
-      console.error('Login failed:', error);
+      console.error('❌ Login failed:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        if ((error as any).response) {
+          console.error('Response:', (error as any).response.data);
+        }
+      }
       setIsAuthenticated(false);
     } finally {
       setIsLoading(false);

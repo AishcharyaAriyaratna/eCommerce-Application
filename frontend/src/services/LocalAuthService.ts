@@ -25,19 +25,45 @@ class LocalAuthService {
   private bffUrl: string;
 
   constructor() {
-    this.bffUrl = process.env.REACT_APP_BFF_API_URL || 'http://localhost:3001';
+    this.bffUrl = process.env.REACT_APP_BFF_URL || 'http://localhost:3001';
   }
 
   /**
    * Login with username and role (local development only)
    */
   async login(username: string, role: string): Promise<TokenResponse> {
-    const response = await axios.post(`${this.bffUrl}/api/auth/login`, {
-      username,
-      role,
-    });
+    const loginUrl = `${this.bffUrl}/api/auth/login`;
+    console.log('🌐 Making login request to:', loginUrl, { username, role });
+    
+    try {
+      const response = await axios.post(loginUrl, {
+        username,
+        role,
+      });
 
-    return response.data;
+      console.log('📡 Login response status:', response.status);
+      console.log('📦 Login response data received:', {
+        hasIdToken: !!response.data.id_token,
+        hasAccessToken: !!response.data.access_token,
+        hasRefreshToken: !!response.data.refresh_token,
+        tokenType: response.data.token_type,
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Login request failed:', error);
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          console.error('Response status:', error.response.status);
+          console.error('Response data:', error.response.data);
+        } else if (error.request) {
+          console.error('No response received, request:', error.request);
+        } else {
+          console.error('Error message:', error.message);
+        }
+      }
+      throw error;
+    }
   }
 
   /**
@@ -104,7 +130,21 @@ class LocalAuthService {
       return false;
     }
   }
+
+  /**
+   * Get Authorization header for API requests
+   */
+  getAuthHeader(): Record<string, string> {
+    const token = this.getAccessToken();
+    if (!token) {
+      return {};
+    }
+    return {
+      'Authorization': `Bearer ${token}`
+    };
+  }
 }
 
-export default new LocalAuthService();
+const localAuthService = new LocalAuthService();
+export default localAuthService;
 export type { User, TokenResponse };

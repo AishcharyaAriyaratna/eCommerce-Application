@@ -1,6 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import Navigation from './Navigation';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -9,9 +10,10 @@ interface ProtectedRouteProps {
 
 /**
  * Protected route component that checks authentication and roles
+ * Includes navigation menu on all protected pages
  * 
  * Usage:
- * <ProtectedRoute requiredRoles={['Supplier']}>
+ * <ProtectedRoute allowedRoles={['Supplier']}>
  *   <SupplierDashboard />
  * </ProtectedRoute>
  */
@@ -39,7 +41,12 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Navigation />
+      {children}
+    </div>
+  );
 };
 
 export default ProtectedRoute;
