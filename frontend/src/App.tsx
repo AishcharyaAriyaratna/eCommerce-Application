@@ -1,10 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { CommerceProvider } from './contexts/CommerceContext';
 import Login from './components/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
 import Products from './pages/Products';
+import ProductDetails from './pages/ProductDetails';
+import Cart from './pages/Cart';
 import Orders from './pages/Orders';
 import Suppliers from './pages/Suppliers';
 import Users from './pages/Users';
@@ -43,6 +46,22 @@ const AppRoutes: React.FC = () => {
         }
       />
       <Route
+        path="/products/:productId"
+        element={
+          <ProtectedRoute allowedRoles={['Customer', 'Supplier', 'Data Steward']}>
+            <ProductDetails />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/cart"
+        element={
+          <ProtectedRoute allowedRoles={['Customer']}>
+            <Cart />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/orders"
         element={
           <ProtectedRoute allowedRoles={['Customer', 'Data Steward']}>
@@ -75,11 +94,13 @@ const AppRoutes: React.FC = () => {
 const App: React.FC = () => {
   return (
     <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <AppRoutes />
-        </div>
-      </Router>
+      <CommerceProvider>
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <AppRoutes />
+          </div>
+        </Router>
+      </CommerceProvider>
     </AuthProvider>
   );
 };

@@ -1,13 +1,18 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { useCommerce } from '../contexts/CommerceContext';
 
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { hasRole, user, logout } = useAuth();
+  const { getCartCount } = useCommerce();
 
   const isActive = (path: string) => {
+    if (path === '/products') {
+      return location.pathname === '/products' || location.pathname.startsWith('/products/');
+    }
     return location.pathname === path;
   };
 
@@ -23,6 +28,8 @@ const Navigation: React.FC = () => {
     navigate('/login', { replace: true });
   };
 
+  const cartCount = user && user.role === 'Customer' ? getCartCount(user.sub || user.username) : 0;
+
   return (
     <nav className="bg-indigo-800 shadow">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -33,7 +40,7 @@ const Navigation: React.FC = () => {
               onClick={() => navigate('/dashboard')}
               className="flex-shrink-0"
             >
-              <h1 className="text-xl font-bold text-white">eCommerce</h1>
+              <h1 className="text-xl font-bold text-white">Food.com</h1>
             </button>
 
             <div className="hidden md:flex items-center space-x-4 ml-8">
@@ -60,6 +67,12 @@ const Navigation: React.FC = () => {
                   className={navItemClass('/orders')}
                 >
                   Orders
+                </button>
+              )}
+
+              {hasRole('Customer') && (
+                <button onClick={() => navigate('/cart')} className={navItemClass('/cart')}>
+                  Cart ({cartCount})
                 </button>
               )}
 
