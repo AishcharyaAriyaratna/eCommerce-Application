@@ -73,7 +73,6 @@ class LocalAuthService {
     localStorage.removeItem('id_token');
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
-    window.location.href = '/';
   }
 
   /**

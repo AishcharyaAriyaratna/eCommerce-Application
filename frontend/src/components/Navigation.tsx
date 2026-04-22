@@ -5,7 +5,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Navigation: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { hasRole } = useAuth();
+  const { hasRole, user, logout } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -16,6 +16,11 @@ const Navigation: React.FC = () => {
     const active = 'bg-indigo-700 text-white';
     const inactive = 'text-gray-300 hover:bg-indigo-600 hover:text-white';
     return `${base} ${isActive(path) ? active : inactive}`;
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   return (
@@ -78,6 +83,20 @@ const Navigation: React.FC = () => {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {user && (
+              <span className="hidden sm:inline text-indigo-100 text-sm">
+                {user.username} ({user.role})
+              </span>
+            )}
+            <button
+              onClick={handleLogout}
+              className="px-3 py-2 rounded-md text-sm font-medium bg-rose-600 text-white hover:bg-rose-500 transition-colors"
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>
